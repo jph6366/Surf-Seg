@@ -1,3 +1,0 @@
-/home/jphardee/Desktop/Cplusplus/surfseg-POC/out/build/Configure preset using toolchain file/CMakeFiles/surfseg-POC.dir
-/home/jphardee/Desktop/Cplusplus/surfseg-POC/out/build/Configure preset using toolchain file/CMakeFiles/edit_cache.dir
-/home/jphardee/Desktop/Cplusplus/surfseg-POC/out/build/Configure preset using toolchain file/CMakeFiles/rebuild_cache.dir
