@@ -1,0 +1,3 @@
+/home/jphardee/Desktop/Cplusplus/Surf-Seg/out/build/ConfigurePreset/CMakeFiles/surfseg-POC.dir
+/home/jphardee/Desktop/Cplusplus/Surf-Seg/out/build/ConfigurePreset/CMakeFiles/edit_cache.dir
+/home/jphardee/Desktop/Cplusplus/Surf-Seg/out/build/ConfigurePreset/CMakeFiles/rebuild_cache.dir

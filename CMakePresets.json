@@ -2,8 +2,8 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "Surf-Seg",
-            "displayName": "Surf-Seg",
+            "name": "ConfigurePreset",
+            "displayName": "ConfigurePreset",
             "description": "Sets Ninja generator, build and install directory",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/out/build/${presetName}",

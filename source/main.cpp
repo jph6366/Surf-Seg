@@ -46,10 +46,6 @@ int main(int, char**){
     for (int i = 0; i < triangles.size(); ++i) {
         surfaceSizes[surfaceUF.find(i)] += 3;
     }
-    // print the number of points in each unique surface
-    for (const auto& entry : surfaceSizes) {
-        std::cout << "Surface " << entry.first << " has " << entry.second << " points." << std::endl;
-    }
 
     // vtkNew means “I own this pointer, which must remain the same for my lifetime”,
     //  vtkSmartPointer means “I use this pointer, which came from somewhere else and might change,”
@@ -63,167 +59,14 @@ int main(int, char**){
     colors->SetNumberOfComponents(3);
     colors->SetName("Colors");
 
-    for(int i = 0; i < triangles.size(); ++i) {
-        if (surfaceUF.find(i) ==  *uniqueSurfaces.begin()) {
-            const Triangle& tri = triangles[i];
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};
-            cylinder1->InsertNextPoint(x);
-            cylinder1->InsertNextPoint(y);
-            cylinder1->InsertNextPoint(z);
-            torus2->InsertNextPoint(x);
-            torus2->InsertNextPoint(y);
-            torus2->InsertNextPoint(z);
-        } else if (surfaceUF.find(i) == *std::next(uniqueSurfaces.begin())) { 
-            const Triangle& tri = triangles[i];
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};
-            torus1->InsertNextPoint(x);
-            torus1->InsertNextPoint(y);
-            torus1->InsertNextPoint(z);
-            cylinder1->InsertNextPoint(x);
-            cylinder1->InsertNextPoint(y);
-            cylinder1->InsertNextPoint(z);
-        } else {
-            const Triangle& tri = triangles[i];
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};
-            torus1->InsertNextPoint(x);
-            torus1->InsertNextPoint(y);
-            torus1->InsertNextPoint(z);
-            torus2->InsertNextPoint(x);
-            torus2->InsertNextPoint(y);
-            torus2->InsertNextPoint(z);
-        }
-    };
-
-    vtkNew<vtkKdTree> kDTree_t1;
-    vtkNew<vtkKdTree> kDTree_t2;
-    vtkNew<vtkKdTree> kDTree_c1;
-
-    buildTree(torus1, kDTree_t1);
-    buildTree(torus2, kDTree_t2);
-    buildTree(cylinder1, kDTree_c1);
-
-    unsigned char r,g,b = 0;
-    double NNDist;
-    for(int i = 0; i < triangles.size(); ++i) {
-        if (surfaceUF.find(i) ==  *uniqueSurfaces.begin()) {
-
-            const Triangle& tri = triangles[i];    
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};    
-
-            points->InsertNextPoint(x);
-            NNDist = proximityFind(x, kDTree_t1);
-            if (NNDist > 0) {
-                // sigmoid function creates a more gradual gradient, 
-                // emphasizing points close to the surface and creating 
-                // a smooth transition for farther points.
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            unsigned char b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-
-            points->InsertNextPoint(y);
-            NNDist = proximityFind(y, kDTree_t1);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-            
-            points->InsertNextPoint(z);
-            NNDist = proximityFind(z, kDTree_t1);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-
-        } else if (surfaceUF.find(i) == *std::next(uniqueSurfaces.begin())) { 
-
-            const Triangle& tri = triangles[i];    
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};    
-
-            points->InsertNextPoint(x);
-            NNDist = proximityFind(x, kDTree_t2);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 * (NNDist/20));
-            } else {
-                r = 0;
-            };
-            unsigned char b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-
-            points->InsertNextPoint(y);
-            NNDist = proximityFind(y, kDTree_t2);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-            
-            points->InsertNextPoint(z);
-            NNDist = proximityFind(z, kDTree_t2);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-        } else {
-            const Triangle& tri = triangles[i];    
-            double x[3] = {tri.v1.x, tri.v1.y, tri.v1.z};
-            double y[3] = {tri.v2.x, tri.v2.y, tri.v2.z};
-            double z[3] = {tri.v3.x, tri.v3.y, tri.v3.z};    
-
-            points->InsertNextPoint(x);
-            NNDist = proximityFind(x, kDTree_c1);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            unsigned char b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-
-            points->InsertNextPoint(y);
-            NNDist = proximityFind(y, kDTree_c1);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-            
-            points->InsertNextPoint(z);
-            NNDist = proximityFind(z, kDTree_c1);
-            if (NNDist > 0) {
-                r = static_cast<unsigned char>(255 / (1 + exp(-0.1 * (NNDist - 100))));
-            } else {
-                r = 0;
-            };
-            b = 255 - r;
-            colors->InsertNextTuple3(r,g,b);
-        }
-    };
+    vtkNew<vtkKdTree> kDTree;
+    for (const auto& entry : surfaceSizes) {
+        vtkNew<vtkPoints> neighborPoints;
+        initializeSpace(neighborPoints, triangles, surfaceUF, entry.first);
+        buildTree(neighborPoints, kDTree);
+        nearestNeighborColorMap(points, colors, kDTree, triangles, surfaceUF, entry.first);
+        clearTree(kDTree);
+    }
 
 
     for(size_t i = 0; i < triangles.size(); i++) {

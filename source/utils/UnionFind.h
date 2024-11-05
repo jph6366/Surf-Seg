@@ -50,6 +50,19 @@ public:
         return sameSet;
     }
 
+    std::vector<int> getAllNotInSameSet(int element) {
+        int root = find(element);  // Find the representative of the given element
+        std::vector<int> sameSet;
+
+        // Iterate over all elements and collect those with the same root
+        for (const auto& [key, _] : parent) {
+            if (find(key) != root) {
+                sameSet.push_back(key);
+            }
+        }
+        return sameSet;
+    }
+
 private:
     std::unordered_map<int, int> parent;
     std::unordered_map<int, int> rank;
