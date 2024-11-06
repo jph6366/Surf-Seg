@@ -6,67 +6,13 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
+#include <unordered_set>
+// #include "../utils/OctreeFLANN.h"
+#include "../utils/KDTreeFLANN.h"
+#include "../utils/UnionFind.h"
+#include "../spec/Triangle.h"
 
-struct Vertex {
-    float x, y, z;
-
-    Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
-
-    bool operator==(const Vertex& other) const {
-        return x == other.x && y == other.y && z == other.z;
-    }
-
-    float length() const {
-
-        return std::sqrt(x * x + y * y + z * z);
-
-    }
-
-
-
-    Vertex operator-(const Vertex& other) const {
-
-        return Vertex(x - other.x, y - other.y, z - other.z);
-
-    }
-
-    float dot(const Vertex& other) const {
-    return x * other.x + y * other.y + z * other.z;
-    }
-
-    float distanceTo(const Vertex& other) const {
-        float dx = x - other.x;
-        float dy = y - other.y;
-        float dz = z - other.z;
-        return std::sqrt(dx * dx + dy * dy + dz * dz);
-    }
-};
-
-
-struct Triangle {
-    Vertex v1, v2, v3;
-
-    Triangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
-        : v1(v1), v2(v2), v3(v3) {}     
-
-    bool sharesVertexWith(const Triangle& other, float radius = 0.0025f) const {
-        auto isWithinRadius = [radius](const Vertex& v1, const Vertex& v2) {
-            return (v1 - v2).length() <= radius;
-        };
-
-        return (v1 == other.v1 || v1 == other.v2 || v1 == other.v3 || isWithinRadius(v1, other.v1) || isWithinRadius(v1, other.v2) || isWithinRadius(v1, other.v3)) ||
-                (v2 == other.v1 || v2 == other.v2 || v2 == other.v3 || isWithinRadius(v2, other.v1) || isWithinRadius(v2, other.v2) || isWithinRadius(v2, other.v3)) ||
-                (v3 == other.v1 || v3 == other.v2 || v3 == other.v3 || isWithinRadius(v3, other.v1) || isWithinRadius(v3, other.v2) || isWithinRadius(v3, other.v3));
-    }
-
-    Vertex getNormal() const {
-        Vertex u(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
-        Vertex v(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
-        return Vertex(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z, u.x * v.y - u.y * v.x);
-    }
-
-
-};
 
 void readTriangles(const std::string& filename, std::vector<Triangle>& triangles) {
     std::ifstream fin(filename);
@@ -92,4 +38,104 @@ void readTriangles(const std::string& filename, std::vector<Triangle>& triangles
             std::cerr << "Invalid line format: " << line << std::endl;
         }
     }
+}
+
+void renderVertices(const std::string& parseArg)
+{
+    std::vector<Triangle> triangles;
+    readTriangles(parseArg, triangles);
+
+    std::cout << "Loaded " << triangles.size() << " triangles\n";
+
+    std::unordered_map<int, std::unordered_set<int>> adjacencyList;
+
+    for (int i = 0; i < triangles.size(); ++i) {
+        for (int j = i + 1; j < triangles.size(); ++j) {
+            if (triangles[i].sharesVertexWith(triangles[j])) {
+                adjacencyList[i].insert(j);
+                adjacencyList[j].insert(i);
+            }
+        }
+    }
+
+    UnionFind surfaceUF;
+    for (int i = 0; i < triangles.size(); ++i) {
+        surfaceUF.add(i);
+    }
+
+    for (const auto& entry : adjacencyList) {
+        int triIndex = entry.first;
+        for (int neighborIndex : entry.second) {
+            surfaceUF.unite(triIndex, neighborIndex);
+        }
+    }
+
+    std::unordered_set<int> uniqueSurfaces;
+    for (int i = 0; i < triangles.size(); ++i) {
+        uniqueSurfaces.insert(surfaceUF.find(i));
+    }
+
+    // get the number of points in each unique surface
+    std::unordered_map<int, int> surfaceSizes;
+    for (int i = 0; i < triangles.size(); ++i) {
+        surfaceSizes[surfaceUF.find(i)] += 3;
+    }
+
+    // vtkNew means “I own this pointer, which must remain the same for my lifetime”,
+    //  vtkSmartPointer means “I use this pointer, which came from somewhere else and might change,”
+    vtkNew<vtkPoints> torus1;
+    vtkNew<vtkPoints> torus2;
+    vtkNew<vtkPoints> cylinder1;
+
+    vtkNew<vtkPoints> points;
+    vtkNew<vtkCellArray> surfaces;
+    vtkNew<vtkUnsignedCharArray> colors;
+    colors->SetNumberOfComponents(3);
+    colors->SetName("Colors");
+
+    vtkNew<vtkKdTree> kDTree;
+    for (const auto& entry : surfaceSizes) {
+        vtkNew<vtkPoints> neighborPoints;
+        initializeSpace(neighborPoints, triangles, surfaceUF, entry.first);
+        buildTree(neighborPoints, kDTree);
+        nearestNeighborColorMap(points, colors, kDTree, triangles, surfaceUF, entry.first);
+        clearTree(kDTree);
+    }
+
+
+    for(size_t i = 0; i < triangles.size(); i++) {
+        vtkNew<vtkTriangle> triangle;
+        triangle->GetPointIds()->SetId(0, i*3);
+        triangle->GetPointIds()->SetId(1, i*3 + 1);
+        triangle->GetPointIds()->SetId(2, i*3 + 2);
+        surfaces->InsertNextCell(triangle);
+    };
+
+    vtkNew<vtkPolyData> surfacePolyData;
+    surfacePolyData->SetPoints(points);
+    surfacePolyData->SetPolys(surfaces);
+    surfacePolyData->GetPointData()->SetScalars(colors);
+
+    vtkNew<vtkPolyDataMapper> surfaceMapper;
+    surfaceMapper->SetInputData(surfacePolyData);
+
+    vtkNew<vtkActor> surfaceActor;
+    surfaceActor->SetMapper(surfaceMapper);
+
+    // Set up Phong lighting model for the surface
+    surfaceActor->GetProperty()->SetInterpolationToPhong();
+    surfaceActor->GetProperty()->SetDiffuse(0.8);
+    surfaceActor->GetProperty()->SetSpecular(0.5);
+    surfaceActor->GetProperty()->SetSpecularPower(30.0);
+
+    vtkNew<vtkRenderer> surfaceRenderer;
+    vtkNew<vtkRenderWindow> surfaceRenderWindow;
+    surfaceRenderWindow->AddRenderer(surfaceRenderer);
+    vtkNew<vtkRenderWindowInteractor> surfaceRenderWindowInteractor;
+    surfaceRenderWindowInteractor->SetRenderWindow(surfaceRenderWindow);
+    surfaceRenderer->AddActor(surfaceActor);
+    surfaceRenderer->SetBackground(0.1, 0.2, 0.3);
+    surfaceRenderWindow->Render();
+    surfaceRenderWindowInteractor->Start();
+    
 }

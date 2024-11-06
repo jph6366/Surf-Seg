@@ -1,3 +1,6 @@
+#ifndef UNIONFIND_H_
+#define UNIONFIND_H_
+
 #include <vector>
 #include <unordered_map>
 
@@ -77,3 +80,5 @@ void printAllInSameSet(UnionFind &uf, int element) {
     }
     std::cout << std::endl;
 }
+
+#endif

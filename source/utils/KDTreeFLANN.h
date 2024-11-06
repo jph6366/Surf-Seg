@@ -14,6 +14,8 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include "../spec/Triangle.h"
+#include "../utils/UnionFind.h"
 
 
 void clearTree(vtkKdTree* tree) {
