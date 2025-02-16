@@ -14,6 +14,10 @@ PCL | https://pointclouds.org/downloads/
 
 ## Usage
 
+The included file vertices.txt contains a list of the triangles. Each line of the file represents a
+triangle in ASCII CSV format using 9 floating point numbers to represent the three vertices of
+the triangle as x0, y0, z0, x1, y1, z1, x2, y2, z2.
+
 ```
 mkdir build
 cd build
