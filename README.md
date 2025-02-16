@@ -28,7 +28,7 @@ make --debug=v
 
 ## To Dos
 
-- Incorporate PCL Octree
+- Incorporate PCL Octree and Visualize Polygon Mesh Surfaces, and add Phong Lighting Model
 - Improve PCL Visualizer to integrate with Qt UI
 - Union Find option to use Inverse Ackermann function
 - Add New Spatial Data Partition Data Structures
