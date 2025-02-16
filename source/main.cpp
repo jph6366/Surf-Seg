@@ -2,7 +2,9 @@
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
-#include "loader/ASCIILoader.h"
+#include "loader/VTKLoader.h"
+// #include "loader/PCLLoader.h"
+
 
 
 class Timer {

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
-project(surfseg-POC VERSION 0.1.0 LANGUAGES C CXX)
-find_package(PCL 1.12.1 REQUIRED)
+project(surf-seg VERSION 0.1.0 LANGUAGES C CXX)
+find_package(PCL 1.12.1 REQUIRED) # TODO specify components used
 find_package(VTK COMPONENTS 
   CommonCore
   CommonDataModel
@@ -21,12 +21,12 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_executable(surfseg-POC source/main.cpp)
+add_executable(surf-seg source/main.cpp)
 
-target_link_libraries (surfseg-POC ${PCL_LIBRARIES} ${VTK_LIBRARIES})
+target_link_libraries (surf-seg ${PCL_LIBRARIES} ${VTK_LIBRARIES})
 # vtk_module_autoinit is needed
 vtk_module_autoinit(
-  TARGETS surfseg-POC 
+  TARGETS surf-seg 
   MODULES ${VTK_LIBRARIES}
 )
 

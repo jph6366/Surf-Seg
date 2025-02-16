@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 // #include "../utils/OctreeFLANN.h"
-#include "../utils/KDTreeFLANN.h"
+#include "../utils/VTKKdTreeFLANN.h"
 #include "../utils/UnionFind.h"
 #include "../spec/Triangle.h"
 
@@ -80,17 +80,15 @@ void renderVertices(const std::string& parseArg)
     for (int i = 0; i < triangles.size(); ++i) {
         surfaceSizes[surfaceUF.find(i)] += 3;
     }
+    std::cout << "Loaded " << surfaceSizes.size() << " surfaces\n";
 
     // vtkNew means “I own this pointer, which must remain the same for my lifetime”,
     //  vtkSmartPointer means “I use this pointer, which came from somewhere else and might change,”
-    vtkNew<vtkPoints> torus1;
-    vtkNew<vtkPoints> torus2;
-    vtkNew<vtkPoints> cylinder1;
 
     vtkNew<vtkPoints> points;
     vtkNew<vtkCellArray> surfaces;
     vtkNew<vtkUnsignedCharArray> colors;
-    colors->SetNumberOfComponents(3);
+    colors->SetNumberOfComponents(surfaceSizes.size());
     colors->SetName("Colors");
 
     vtkNew<vtkKdTree> kDTree;

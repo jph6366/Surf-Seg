@@ -17,14 +17,17 @@ PCL | https://pointclouds.org/downloads/
 ```
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -G "Ninja" ..
-ninja
-./surf-seg
+cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ..
+make --debug=v
+./surf-seg vertices.txt
 ```
 
-## Contributing
+## To Dos
 
-PRs accepted.
+- Incorporate PCL Octree
+- Improve PCL Visualizer to integrate with Qt UI
+- Union Find option to use Inverse Ackermann function
+- Add New Spatial Data Partition Data Structures
 
 ## License
 
